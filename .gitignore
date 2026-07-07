@@ -1,0 +1,15 @@
+.env
+
+apps/*.env
+!apps/.gitkeep
+
+# Stale bind-mount artifacts. Postgres data lives in the `shared-pg-data`
+# Docker volume now, not the repo filesystem — but keep this here so any
+# leftover ./data/ directory from a previous run doesn't pollute git.
+data/
+
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
