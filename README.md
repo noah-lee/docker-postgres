@@ -2,6 +2,8 @@
 
 Self-hosted Docker PostgreSQL instance shared across multiple apps. Each app gets its own database and owner role. Apps consume a single `DATABASE_URL`; this repo handles provisioning.
 
+Runs `pgvector/pgvector:0.8.1-pg17` — Postgres 17 with the `vector` extension available. The cluster is initialised with the `C.UTF-8` locale.
+
 ## Requirements
 
 - Docker + Docker Compose
@@ -24,7 +26,7 @@ Copy the printed `DATABASE_URL` into the app's `.env`.
 ./scripts/add-app.sh myapp
 ```
 
-Generates a random password, creates a database + owner user, and writes `apps/myapp.env`:
+Generates a random password, creates a database + owner user, enables the `vector` extension in that database, and writes `apps/myapp.env`:
 
 ```
 DATABASE_URL=postgres://myapp:<generated>@localhost:5432/myapp
@@ -57,6 +59,8 @@ docker compose up -d
 ./scripts/add-app.sh <app>
 ```
 
+Bumping the image tag does not upgrade an already-installed extension; run `ALTER EXTENSION vector UPDATE;` per database after a bump.
+
 For each app deployed on the VPS, in the app's own `docker-compose.yml` add the shared network:
 
 ```yaml
@@ -77,7 +81,7 @@ The app's container resolves `postgres` via Docker DNS on the shared network.
 ## What's not here
 
 - **Backups.** Out of scope. The simplest path when you need them: a cron job running `pg_dump` per database and shipping the output offsite (S3, B2). When backups become load-bearing, you've probably outgrown self-hosting — consider Supabase / Neon / RDS at that point.
-- **Postgres extensions.** Add when needed by an app — build a custom image from `postgres:17-alpine`.
+- **Postgres extensions beyond `vector`.** `vector` ships with the image and `add-app.sh` enables it per database. For anything else, build a custom image `FROM pgvector/pgvector:0.8.1-pg17`.
 - **TLS to Postgres.** All traffic is on localhost or a private Docker network; no public exposure.
 - **Connection pooling (PgBouncer).** Not needed at toy-app scale.
 
